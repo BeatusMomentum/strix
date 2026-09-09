@@ -339,7 +339,9 @@ class GoTuiRuntime:
         if self.report_state is not None:
             usage = dict(self.report_state.get_total_llm_usage())
             vulnerabilities = [
-                report.get("id", index) if isinstance(report, dict) else index
+                (report.get("id", index), report.get("updated_at"))
+                if isinstance(report, dict)
+                else index
                 for index, report in enumerate(self.report_state.vulnerability_reports)
             ]
         return json.dumps(
