@@ -1036,9 +1036,21 @@ def test_sync_fingerprint_tracks_report_revisions(tmp_path: Path) -> None:
     runtime.report_state.vulnerability_reports = [{"id": "vuln-0001", "title": "Old title"}]
     runtime.report_state.get_run_dir = lambda: tmp_path  # type: ignore[method-assign]
 
-    before = runtime._runtime_sync_fingerprint()
-    runtime.report_state.vulnerability_reports[0].update(
-        {"title": "New title", "updated_at": "2026-09-09T10:00:00+00:00"}
-    )
+    report = runtime.report_state.vulnerability_reports[0]
+    timestamp = "2026-09-09 10:00:00 UTC"
 
-    assert runtime._runtime_sync_fingerprint() != before
+    before = runtime._runtime_sync_fingerprint()
+    report.update(
+        {
+            "title": "New title",
+            "updated_at": timestamp,
+            "update_history": [{"timestamp": timestamp, "fields": ["title"]}],
+        }
+    )
+    first_revision = runtime._runtime_sync_fingerprint()
+    assert first_revision != before
+
+    report["title"] = "Newer title"
+    report["update_history"].append({"timestamp": timestamp, "fields": ["title"]})
+
+    assert runtime._runtime_sync_fingerprint() != first_revision
